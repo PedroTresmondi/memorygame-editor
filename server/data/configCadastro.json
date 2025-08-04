@@ -1,0 +1,28 @@
+{
+  "background": {
+    "type": "image",
+    "value": "/assets/background/bgEcontreme.png"
+  },
+  "containers": [
+    {
+      "id": "container1",
+      "top": 70,
+      "left": 150,
+      "width": 780,
+      "height": 400,
+      "fields": [
+        {
+          "id": "campo1754083710170",
+          "label": "teste",
+          "type": "text",
+          "top": 290,
+          "left": 160,
+          "width": 240,
+          "required": true,
+          "placeholder": "teste",
+          "labelPosition": "top"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "memorygame-editor",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "dev:server": "nodemon server/server.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "nodemon": "^3.1.10",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4"
+  }
+}

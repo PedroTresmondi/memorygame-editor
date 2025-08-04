@@ -1,0 +1,22 @@
+.guia-central-x,
+.guia-central-y {
+  position: absolute;
+  background: rgba(255, 0, 0, 0.3);
+  pointer-events: none;
+}
+
+.guia-central-x {
+  width: 1px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-0.5px);
+}
+
+.guia-central-y {
+  height: 1px;
+  width: 100%;
+  top: 50%;
+  left: 0;
+  transform: translateY(-0.5px);
+}
