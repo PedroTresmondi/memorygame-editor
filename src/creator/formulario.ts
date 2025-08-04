@@ -21,6 +21,7 @@ interface Container {
 }
 
 interface ElementoExtra {
+  padding: string;
   id: string;
   type: "button" | "image";
   top: number;
@@ -111,7 +112,6 @@ fetch("http://localhost:5500/data/configCadastro.json")
     });
 
     // 🎯 Elementos extras: botões e imagens
-    // 🎯 Elementos extras: botões e imagens
     config.elements?.forEach((el) => {
       const baseStyle: Partial<CSSStyleDeclaration> = {
         position: "absolute",
@@ -145,6 +145,27 @@ fetch("http://localhost:5500/data/configCadastro.json")
         }
 
         form.appendChild(button);
+      }
+
+      if (el.type === "text") {
+        const p = document.createElement("p");
+        p.textContent = el.content || "Texto";
+        p.style.position = "absolute";
+        p.style.top = el.top + "px";
+        p.style.left = el.left + "px";
+        p.style.width = el.width + "px";
+        p.style.height = (el.height ?? 40) + "px";
+        p.style.margin = "0";
+        p.style.padding = el.padding || "0";
+        p.style.fontSize = el.fontSize || "16px";
+        p.style.color = el.color || "#000";
+        p.style.fontWeight = el.fontWeight || "normal";
+        p.style.textAlign = el.textAlign || "left";
+        p.style.backgroundColor = el.backgroundColor || "transparent";
+        if (el.borderRadius) p.style.borderRadius = el.borderRadius;
+        if (el.boxShadow) p.style.boxShadow = el.boxShadow;
+
+        form.appendChild(p);
       }
 
       if (el.type === "image") {
