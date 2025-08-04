@@ -3,6 +3,7 @@ import { isPreviewMode } from "./previewMode";
 import { snapToGrid } from "./utils";
 import { atualizarPreview } from "./previewRenderer";
 import { atualizarPainelCampo } from "./campoEditor";
+import { abrirPainelPropriedades } from "./painelEditor";
 
 export function renderCampos(
   containerDiv: HTMLDivElement,
@@ -48,6 +49,7 @@ export function renderCampos(
         state.containerSelecionado = container.id;
         atualizarPreview();
         atualizarPainelCampo();
+        abrirPainelPropriedades(campo);
       });
     }
 

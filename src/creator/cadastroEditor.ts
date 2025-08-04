@@ -2,11 +2,16 @@ import { state } from "./state";
 import { atualizarPreview } from "./previewRenderer";
 import { adicionarContainer } from "./containerManager";
 import { adicionarCampo } from "./fieldManager";
+import { adicionarTexto } from "./textManager.ts";
 
 import { adicionarBotao, adicionarImagem } from "./elementManager";
 
-document.getElementById("btnAddBotao")?.addEventListener("click", adicionarBotao);
-document.getElementById("btnAddImagem")?.addEventListener("click", adicionarImagem);
+document
+  .getElementById("btnAddBotao")
+  ?.addEventListener("click", adicionarBotao);
+document
+  .getElementById("btnAddImagem")
+  ?.addEventListener("click", adicionarImagem);
 
 import {
   salvarLocal,
@@ -20,7 +25,20 @@ import { salvarConfiguracaoCadastro } from "./exportador";
 (window as any).salvarConfiguracaoCadastro = salvarConfiguracaoCadastro;
 
 import { adicionarGuiasFixas } from "./guiasFixas";
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const res = await fetch("http://localhost:5500/data/configCadastro.json");
+    const json = await res.json();
+
+    if (json.containers) state.containers = json.containers;
+    if (json.elements) state.elements = json.elements;
+    if (json.background) state.background = json.background;
+
+    atualizarPreview();
+  } catch (err) {
+    console.warn("⚠️ Não foi possível carregar configCadastro.json:", err);
+  }
+
   adicionarGuiasFixas();
 });
 
@@ -50,8 +68,6 @@ gridOverlay.style.backgroundImage = `
   linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)`;
 gridOverlay.style.backgroundSize = "10px 10px";
 previewWrapper.appendChild(gridOverlay);
-
-
 
 let gridAtiva = true;
 function toggleGrid() {
@@ -93,6 +109,9 @@ btnAdicionar.addEventListener("click", () => {
   });
 });
 btnSalvar.addEventListener("click", salvarConfiguracao);
+document
+  .getElementById("btnAddTexto")
+  ?.addEventListener("click", adicionarTexto);
 
 
 

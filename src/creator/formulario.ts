@@ -5,6 +5,9 @@ interface Campo {
   type: string;
   placeholder?: string;
   required?: boolean;
+  top?: number;
+  left?: number;
+  width?: number;
 }
 
 interface Container {
@@ -13,8 +16,21 @@ interface Container {
   left: number;
   width: number;
   height: number;
-  campos?: Campo[]; // preferencial
-  fields?: Campo[]; // fallback
+  campos?: Campo[];
+  fields?: Campo[];
+}
+
+interface ElementoExtra {
+  id: string;
+  type: "button" | "image";
+  top: number;
+  left: number;
+  width: number;
+  height?: number;
+  label?: string;
+  action?: "submit" | "reset" | "custom";
+  src?: string;
+  alt?: string;
 }
 
 interface ConfigCadastro {
@@ -23,16 +39,16 @@ interface ConfigCadastro {
     value: string;
   };
   containers: Container[];
+  elements?: ElementoExtra[];
 }
 
 const wrapper = document.getElementById("formularioWrapper")!;
 const form = document.getElementById("formularioReal")!;
-const btnEnviar = document.getElementById("btnEnviar")!;
 
 fetch("http://localhost:5500/data/configCadastro.json")
   .then((res) => res.json())
   .then((config: ConfigCadastro) => {
-    // 🎨 Aplica o fundo da página
+    // 🎨 Fundo
     if (config.background?.type === "color") {
       wrapper.style.background = config.background.value;
     } else if (config.background?.type === "image") {
@@ -41,7 +57,7 @@ fetch("http://localhost:5500/data/configCadastro.json")
       wrapper.style.backgroundPosition = "center";
     }
 
-    // 📦 Renderiza os containers e campos
+    // 📦 Containers e campos
     config.containers.forEach((container) => {
       const containerDiv = document.createElement("div");
       containerDiv.style.position = "absolute";
@@ -93,18 +109,69 @@ fetch("http://localhost:5500/data/configCadastro.json")
 
       form.appendChild(containerDiv);
     });
+
+    // 🎯 Elementos extras: botões e imagens
+    // 🎯 Elementos extras: botões e imagens
+    config.elements?.forEach((el) => {
+      const baseStyle: Partial<CSSStyleDeclaration> = {
+        position: "absolute",
+        top: el.top + "px",
+        left: el.left + "px",
+        width: el.width + "px",
+        height: (el.height ?? 40) + "px",
+        backgroundColor: el.backgroundColor || "",
+        color: el.color || "",
+        borderRadius: el.borderRadius || "",
+        zIndex: "10",
+      };
+
+      if (el.type === "button") {
+        const button = document.createElement("button");
+        button.id = el.id;
+        button.textContent = el.label || "Botão";
+
+        Object.assign(button.style, baseStyle);
+
+        // Ações do botão
+        if (el.action === "submit") {
+          button.type = "submit";
+        } else if (el.action === "reset") {
+          button.type = "reset";
+        } else {
+          button.type = "button";
+          button.addEventListener("click", () => {
+            alert(`Botão custom '${el.label}' clicado`);
+          });
+        }
+
+        form.appendChild(button);
+      }
+
+      if (el.type === "image") {
+        const img = document.createElement("img");
+        img.src = el.src || "";
+        img.alt = el.alt || "imagem";
+
+        Object.assign(img.style, {
+          ...baseStyle,
+          objectFit: "contain",
+        });
+
+        form.appendChild(img);
+      }
+    });
   })
   .catch((err) => {
     console.error("Erro ao carregar configCadastro.json", err);
   });
 
-// 📤 Captura e exibe os dados ao enviar
-btnEnviar.addEventListener("click", (e) => {
+// 📤 Captura ao enviar (delegado via form submit)
+form.addEventListener("submit", (e) => {
   e.preventDefault();
 
   const dados = new FormData(form as HTMLFormElement);
   const obj = Object.fromEntries(dados.entries());
   console.log("Dados do formulário:", obj);
 
-  // Você pode fazer um POST aqui se quiser salvar os dados
+  // Aqui você pode usar fetch() para enviar os dados
 });

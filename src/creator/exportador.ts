@@ -1,26 +1,23 @@
 import { state } from "./state";
 
 export function salvarConfiguracaoCadastro() {
-  const jsonCompleto = {
+  const json = JSON.stringify({
     background: state.background,
     containers: state.containers,
-  };
+    elements: state.elements,
+  }, null, 2);
 
   fetch("http://localhost:5500/salvar-config-cadastro", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(jsonCompleto, null, 2),
+    headers: { "Content-Type": "application/json" },
+    body: json,
   })
     .then((res) => {
-      if (res.ok) {
-        alert("Configuração salva com sucesso!");
-      } else {
-        alert("Erro ao salvar.");
-      }
+      if (!res.ok) throw new Error("Erro ao salvar");
+      alert("Configuração salva com sucesso!");
     })
     .catch((err) => {
       console.error("Erro ao salvar JSON:", err);
+      alert("Erro ao salvar configuração.");
     });
 }

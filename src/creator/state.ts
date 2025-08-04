@@ -41,7 +41,7 @@ export const state: {
     type: "color" | "image";
     value: string;
   };
-  elements: ElementoExtra[]; // ✅ incluído aqui também
+  elements: ElementoExtra[];
 } = {
   containers: [],
   containerSelecionado: null,
@@ -50,5 +50,5 @@ export const state: {
     type: "color",
     value: "#f0f0f0",
   },
-  elements: [], // ✅ inicialização correta
+  elements: [],
 };

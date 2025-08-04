@@ -13,5 +13,9 @@
     "nodemon": "^3.1.10",
     "typescript": "~5.8.3",
     "vite": "^7.0.4"
+  },
+  "dependencies": {
+    "formidable": "^3.5.4",
+    "multer": "^2.0.2"
   }
 }
