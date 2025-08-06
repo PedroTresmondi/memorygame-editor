@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "id": "texto_1754341670244",
+      "type": "text",
+      "content": "Texto de exemplo",
+      "top": 100,
+      "left": 100,
+      "width": 250,
+      "height": 50,
+      "fontSize": "18px",
+      "fontWeight": "normal",
+      "color": "#000000",
+      "textAlign": "left",
+      "backgroundColor": "transparent",
+      "padding": "4px",
+      "borderRadius": "0px",
+      "boxShadow": "none"
+    }
+  ],
+  "containers": [],
+  "background": {
+    "type": "color",
+    "value": "#f0f0f0"
+  }
+}

@@ -192,3 +192,37 @@ button:active {
   display: none;
   /* fica oculto até ser chamado */
 }
+.mensagem {
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 14px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.mensagem.info {
+  background-color: #e8f4ff;
+  color: #004085;
+}
+
+.mensagem.erro {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.mensagem.sucesso {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

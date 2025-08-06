@@ -23,7 +23,7 @@ interface Container {
 interface ElementoExtra {
   padding: string;
   id: string;
-  type: "button" | "image";
+  type: "button" | "image" | "text";
   top: number;
   left: number;
   width: number;
@@ -32,6 +32,14 @@ interface ElementoExtra {
   action?: "submit" | "reset" | "custom";
   src?: string;
   alt?: string;
+  content?: string;
+  backgroundColor?: string;
+  borderRadius?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  textAlign?: string;
+  color?: string;
+  boxShadow?: string;
 }
 
 interface ConfigCadastro {
@@ -43,13 +51,27 @@ interface ConfigCadastro {
   elements?: ElementoExtra[];
 }
 
+const debugMode = true;
+
+function mostrarMensagemPainel(msg: string, tipo: "info" | "erro" = "info") {
+  const painel = document.getElementById("mensagemSistema");
+  if (!painel) return;
+  painel.textContent = msg;
+  painel.style.color = tipo === "erro" ? "red" : "green";
+  painel.style.display = "block";
+}
+
 const wrapper = document.getElementById("formularioWrapper")!;
 const form = document.getElementById("formularioReal")!;
 
-fetch("http://localhost:5500/data/configCadastro.json")
-  .then((res) => res.json())
-  .then((config: ConfigCadastro) => {
-    // 🎨 Fundo
+async function carregarConfiguracao() {
+  try {
+    const res = await fetch("http://localhost:5500/data/configCadastro.json");
+    if (!res.ok) throw new Error("Erro ao carregar JSON");
+
+    const config: ConfigCadastro = await res.json();
+
+    // Fundo
     if (config.background?.type === "color") {
       wrapper.style.background = config.background.value;
     } else if (config.background?.type === "image") {
@@ -58,7 +80,7 @@ fetch("http://localhost:5500/data/configCadastro.json")
       wrapper.style.backgroundPosition = "center";
     }
 
-    // 📦 Containers e campos
+    // Containers e campos
     config.containers.forEach((container) => {
       const containerDiv = document.createElement("div");
       containerDiv.style.position = "absolute";
@@ -111,7 +133,7 @@ fetch("http://localhost:5500/data/configCadastro.json")
       form.appendChild(containerDiv);
     });
 
-    // 🎯 Elementos extras: botões e imagens
+    // Elementos extras: botões, imagens, textos
     config.elements?.forEach((el) => {
       const baseStyle: Partial<CSSStyleDeclaration> = {
         position: "absolute",
@@ -123,16 +145,19 @@ fetch("http://localhost:5500/data/configCadastro.json")
         color: el.color || "",
         borderRadius: el.borderRadius || "",
         zIndex: "10",
+        padding: el.padding || "0",
+        fontSize: el.fontSize || "16px",
+        fontWeight: el.fontWeight || "normal",
+        textAlign: el.textAlign || "left",
+        boxShadow: el.boxShadow || "",
       };
 
       if (el.type === "button") {
         const button = document.createElement("button");
         button.id = el.id;
         button.textContent = el.label || "Botão";
-
         Object.assign(button.style, baseStyle);
 
-        // Ações do botão
         if (el.action === "submit") {
           button.type = "submit";
         } else if (el.action === "reset") {
@@ -150,21 +175,8 @@ fetch("http://localhost:5500/data/configCadastro.json")
       if (el.type === "text") {
         const p = document.createElement("p");
         p.textContent = el.content || "Texto";
-        p.style.position = "absolute";
-        p.style.top = el.top + "px";
-        p.style.left = el.left + "px";
-        p.style.width = el.width + "px";
-        p.style.height = (el.height ?? 40) + "px";
+        Object.assign(p.style, baseStyle);
         p.style.margin = "0";
-        p.style.padding = el.padding || "0";
-        p.style.fontSize = el.fontSize || "16px";
-        p.style.color = el.color || "#000";
-        p.style.fontWeight = el.fontWeight || "normal";
-        p.style.textAlign = el.textAlign || "left";
-        p.style.backgroundColor = el.backgroundColor || "transparent";
-        if (el.borderRadius) p.style.borderRadius = el.borderRadius;
-        if (el.boxShadow) p.style.boxShadow = el.boxShadow;
-
         form.appendChild(p);
       }
 
@@ -172,27 +184,27 @@ fetch("http://localhost:5500/data/configCadastro.json")
         const img = document.createElement("img");
         img.src = el.src || "";
         img.alt = el.alt || "imagem";
-
         Object.assign(img.style, {
           ...baseStyle,
           objectFit: "contain",
         });
-
         form.appendChild(img);
       }
     });
-  })
-  .catch((err) => {
-    console.error("Erro ao carregar configCadastro.json", err);
-  });
 
-// 📤 Captura ao enviar (delegado via form submit)
+    mostrarMensagemPainel("✅ Formulário carregado com sucesso!");
+  } catch (err) {
+    mostrarMensagemPainel("❌ Erro ao carregar o formulário.", "erro");
+    if (debugMode) console.error("Erro no carregamento do formulário:", err);
+  }
+}
+
+carregarConfiguracao();
+
+// Envio
 form.addEventListener("submit", (e) => {
   e.preventDefault();
-
   const dados = new FormData(form as HTMLFormElement);
   const obj = Object.fromEntries(dados.entries());
-  console.log("Dados do formulário:", obj);
-
-  // Aqui você pode usar fetch() para enviar os dados
+  console.log("📤 Dados do formulário:", obj);
 });

@@ -1,8 +1,12 @@
 import { state } from "./state";
 import { atualizarPreview } from "./previewRenderer";
+import { salvarEstado } from "./historyManager"; // 👈
 
 export function adicionarTexto() {
-  const texto = prompt("Digite o conteúdo do texto:", "Texto de exemplo") || "Texto de exemplo";
+  salvarEstado(); // 👈 Importante
+  const texto =
+    prompt("Digite o conteúdo do texto:", "Texto de exemplo") ||
+    "Texto de exemplo";
 
   const novoTexto = {
     id: `texto_${Date.now()}`,
@@ -19,7 +23,7 @@ export function adicionarTexto() {
     backgroundColor: "transparent",
     padding: "4px",
     borderRadius: "0px",
-    boxShadow: "none"
+    boxShadow: "none",
   };
 
   state.elements.push(novoTexto);

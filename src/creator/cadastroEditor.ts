@@ -1,10 +1,14 @@
-import { state } from "./state";
+import { state, debugMode } from "./state";
 import { atualizarPreview } from "./previewRenderer";
 import { adicionarContainer } from "./containerManager";
 import { adicionarCampo } from "./fieldManager";
 import { adicionarTexto } from "./textManager.ts";
 
+import { exibirMensagem } from "./utils.ts";
+import { estadoModificado } from "./state";
+
 import { adicionarBotao, adicionarImagem } from "./elementManager";
+import { salvarEstado, desfazer, refazer } from "./historyManager";
 
 document
   .getElementById("btnAddBotao")
@@ -25,9 +29,11 @@ import { salvarConfiguracaoCadastro } from "./exportador";
 (window as any).salvarConfiguracaoCadastro = salvarConfiguracaoCadastro;
 
 import { adicionarGuiasFixas } from "./guiasFixas";
+
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     const res = await fetch("http://localhost:5500/data/configCadastro.json");
+    if (!res.ok) throw new Error("Erro ao carregar JSON. Status " + res.status);
     const json = await res.json();
 
     if (json.containers) state.containers = json.containers;
@@ -35,8 +41,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (json.background) state.background = json.background;
 
     atualizarPreview();
-  } catch (err) {
-    console.warn("⚠️ Não foi possível carregar configCadastro.json:", err);
+    exibirMensagem("Configuração carregada com sucesso!", "sucesso");
+  } catch (err: any) {
+    exibirMensagem("❌ Não foi possível carregar a configuração.", "erro");
+    if (debugMode) console.error("[Erro ao carregar JSON]:", err);
   }
 
   adicionarGuiasFixas();
@@ -113,8 +121,6 @@ document
   .getElementById("btnAddTexto")
   ?.addEventListener("click", adicionarTexto);
 
-
-
 // Configuração de fundo
 bgColorPicker.addEventListener("input", (e) => {
   state.background = {
@@ -147,13 +153,29 @@ window.addEventListener("keydown", (e) => {
     salvarLocal();
     alert("Configuração salva localmente!");
   }
+
   if (e.ctrlKey && e.key.toLowerCase() === "g") {
     e.preventDefault();
     toggleGrid();
   }
+
+  if (e.ctrlKey && e.key.toLowerCase() === "z") {
+    e.preventDefault();
+    desfazer();
+  }
+
+  if (
+    e.ctrlKey &&
+    (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase() === "z"))
+  ) {
+    e.preventDefault();
+    refazer();
+  }
 });
 
 // Expor funções globais ao HTML inline (botões do preview)
+(window as any).desfazer = desfazer;
+(window as any).refazer = refazer;
 (window as any).salvarLocal = salvarLocal;
 (window as any).exportarJSON = exportarJSON;
 (window as any).alternarPreviewFinal = alternarPreviewFinal;
@@ -161,3 +183,10 @@ window.addEventListener("keydown", (e) => {
 // Inicialização
 carregarLocal();
 atualizarPreview();
+
+window.addEventListener("beforeunload", (e) => {
+  if (estadoModificado) {
+    e.preventDefault();
+    e.returnValue = "Você tem alterações não salvas. Deseja sair?";
+  }
+});
