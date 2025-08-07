@@ -8,6 +8,7 @@ import { renderCampos } from "./fieldRenderer";
 import { atualizarPainelCampo } from "./campoEditor";
 import { abrirPainelElemento } from "./painelElemento";
 import { abrirPainelPropriedades } from "./painelEditor";
+import { mostrarGuiaDinamica } from "./snapAssist";
 
 export function atualizarPreview() {
   const previewForm = document.getElementById("previewForm")!;
@@ -113,7 +114,6 @@ export function atualizarPreview() {
       btn.style.width = "100%";
       btn.style.height = "100%";
 
-      // APLICA OS ESTILOS PERSONALIZADOS
       if (el.backgroundColor) btn.style.backgroundColor = el.backgroundColor;
       if (el.color) btn.style.color = el.color;
       if (el.borderRadius) btn.style.borderRadius = el.borderRadius;
@@ -223,19 +223,22 @@ export function atualizarPreview() {
 
     if (!isPreviewMode()) {
       let dragging = false;
+      let resizing = false;
       let offsetX = 0;
       let offsetY = 0;
 
       elDiv.addEventListener("mousedown", (e) => {
         const target = e.target as HTMLElement;
 
-        // NÃO INICIA DRAG se clicou no botão de remover ou no resizer
         if (
           target.closest("button")?.textContent === "🗑️" ||
           target.classList.contains("resize-handle")
         )
           return;
 
+        toggleSelecionado(el.id, e.shiftKey);
+
+        resizing = false;
         dragging = true;
 
         const bounds = previewWrapper.getBoundingClientRect();
@@ -246,19 +249,32 @@ export function atualizarPreview() {
         e.stopPropagation();
 
         const onMove = (e: MouseEvent) => {
-          if (!dragging) return;
+          if (!dragging || resizing) return;
 
           const bounds = previewWrapper.getBoundingClientRect();
           const scale = getCurrentZoom();
 
-          el.left = (e.clientX - bounds.left - offsetX) / scale;
-          el.top = (e.clientY - bounds.top - offsetY) / scale;
+          const x = (e.clientX - bounds.left - offsetX) / scale;
+          const y = (e.clientY - bounds.top - offsetY) / scale;
 
+          const dx = x - el.left;
+          const dy = y - el.top;
+
+          state.elements.forEach((item) => {
+            if (state.elementosSelecionados.includes(item.id)) {
+              item.left += dx;
+              item.top += dy;
+              aplicarSnapCentralElemento(item);
+            }
+          });
+
+          exibirPosicao(x, y);
           atualizarPreview();
         };
 
         const onUp = () => {
           dragging = false;
+          esconderPosicao();
           document.removeEventListener("mousemove", onMove);
           document.removeEventListener("mouseup", onUp);
         };
@@ -273,3 +289,176 @@ export function atualizarPreview() {
 
   atualizarPainelCampo();
 }
+
+function aplicarSnapCentralElemento(el: {
+  left: number;
+  top: number;
+  width: number;
+  height?: number;
+}) {
+  const wrapper = document.getElementById("previewWrapper");
+  if (!wrapper) return;
+
+  const wrapperWidth = wrapper.clientWidth;
+  const wrapperHeight = wrapper.clientHeight;
+
+  const centerPreviewX = wrapperWidth / 2;
+  const centerPreviewY = wrapperHeight / 2;
+  const centerElX = el.left + el.width / 2;
+  const centerElY = el.top + (el.height ?? 40) / 2;
+  const threshold = 15;
+
+  if (Math.abs(centerElX - centerPreviewX) < threshold) {
+    el.left = centerPreviewX - el.width / 2;
+    mostrarGuiaDinamica("x");
+  }
+
+  if (Math.abs(centerElY - centerPreviewY) < threshold) {
+    el.top = centerPreviewY - (el.height ?? 40) / 2;
+    mostrarGuiaDinamica("y");
+  }
+}
+
+function toggleSelecionado(id: string, shift: boolean) {
+  if (!shift) {
+    state.elementosSelecionados = [id];
+  } else {
+    const index = state.elementosSelecionados.indexOf(id);
+    if (index >= 0) {
+      state.elementosSelecionados.splice(index, 1);
+    } else {
+      state.elementosSelecionados.push(id);
+    }
+  }
+}
+
+function exibirPosicao(x: number, y: number) {
+  let indicador = document.getElementById("indicador-pos");
+  if (!indicador) {
+    indicador = document.createElement("div");
+    indicador.id = "indicador-pos";
+    indicador.style.position = "fixed";
+    indicador.style.top = "10px";
+    indicador.style.right = "10px";
+    indicador.style.background = "black";
+    indicador.style.color = "white";
+    indicador.style.padding = "4px 8px";
+    indicador.style.fontSize = "12px";
+    indicador.style.borderRadius = "4px";
+    indicador.style.zIndex = "9999";
+    document.body.appendChild(indicador);
+  }
+  indicador.textContent = `x: ${Math.round(x)}px, y: ${Math.round(y)}px`;
+}
+
+function esconderPosicao() {
+  const indicador = document.getElementById("indicador-pos");
+  if (indicador) indicador.remove();
+}
+
+function habilitarMovimentacaoElemento(
+  el: any,
+  elDiv: HTMLDivElement,
+  getWrapperBounds: () => DOMRect,
+  getZoom: () => number
+) {
+  if (isPreviewMode()) return;
+
+  let dragging = false;
+  let resizing = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  elDiv.addEventListener("mousedown", (e) => {
+    const target = e.target as HTMLElement;
+
+    if (
+      target.closest("button")?.textContent === "🗑️" ||
+      target.classList.contains("resize-handle")
+    )
+      return;
+
+    toggleSelecionado(el.id, e.shiftKey);
+    resizing = false;
+    dragging = true;
+
+    const bounds = getWrapperBounds();
+    const scale = getZoom();
+
+    offsetX = e.clientX - bounds.left - el.left * scale;
+    offsetY = e.clientY - bounds.top - el.top * scale;
+    e.stopPropagation();
+
+    const onMove = (e: MouseEvent) => {
+      if (!dragging || resizing) return;
+
+      const bounds = getWrapperBounds();
+      const scale = getZoom();
+
+      const x = (e.clientX - bounds.left - offsetX) / scale;
+      const y = (e.clientY - bounds.top - offsetY) / scale;
+
+      const dx = x - el.left;
+      const dy = y - el.top;
+
+      state.elements.forEach((item) => {
+        if (state.elementosSelecionados.includes(item.id)) {
+          item.left += dx;
+          item.top += dy;
+          aplicarSnapCentralElemento(item);
+        }
+      });
+
+      exibirPosicao(x, y);
+      atualizarPreview();
+    };
+
+    const onUp = () => {
+      dragging = false;
+      esconderPosicao();
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (isPreviewMode()) return;
+  if (state.elementosSelecionados.length === 0) return;
+
+  const step = e.shiftKey ? 10 : 1;
+
+  let dx = 0;
+  let dy = 0;
+
+  switch (e.key) {
+    case "ArrowUp":
+      dy = -step;
+      break;
+    case "ArrowDown":
+      dy = step;
+      break;
+    case "ArrowLeft":
+      dx = -step;
+      break;
+    case "ArrowRight":
+      dx = step;
+      break;
+    default:
+      return; // não bloqueia teclas que não são setas
+  }
+
+  e.preventDefault();
+
+  state.elements.forEach((el) => {
+    if (state.elementosSelecionados.includes(el.id)) {
+      el.left += dx;
+      el.top += dy;
+    }
+  });
+
+  atualizarPreview();
+});

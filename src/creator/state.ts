@@ -18,6 +18,7 @@ export type Campo = {
   maxLength?: number;
   top: number;
   left: number;
+  background?: boolean;
   width?: number;
   labelPosition?: "top" | "left";
 };
@@ -54,6 +55,7 @@ export type ElementoExtra = {
 };
 
 export type AppState = {
+  elementosSelecionados: string[];
   containers: Container[];
   containerSelecionado: string | null;
   campoSelecionado: string | null;
@@ -66,6 +68,7 @@ export type AppState = {
 
 // Estado base (antes do proxy)
 const _state: AppState = {
+  elementosSelecionados: [],
   containers: [],
   containerSelecionado: null,
   campoSelecionado: null,

@@ -1,41 +1,47 @@
 import { state } from "./state";
 import { atualizarPreview } from "./previewRenderer";
 
+const inputPresets: Record<string, Record<string, string>> = {
+  clean: {
+    backgroundColor: "transparent",
+    border: "none",
+    fontSize: "16px",
+  },
+  classic: {
+    backgroundColor: "#fff",
+    border: "1px solid #ccc",
+    padding: "10px",
+    fontSize: "14px",
+  },
+  dark: {
+    backgroundColor: "#222",
+    color: "#fff",
+    border: "1px solid #444",
+  },
+};
+
 export function abrirPainelPropriedades(elemento: any) {
   const painel = document.getElementById("painelPropriedades")!;
   const conteudo = document.getElementById("conteudoPropriedades")!;
   painel.style.display = "block";
   conteudo.innerHTML = "";
 
-  // Campo especial para texto (content)
-  if (elemento.type === "text") {
-    const inputTexto = document.createElement("textarea");
-    inputTexto.value = elemento.content || "";
-    inputTexto.rows = 3;
-    inputTexto.style.width = "100%";
-    inputTexto.addEventListener("input", () => {
-      elemento.content = inputTexto.value;
-      atualizarPreview();
-    });
-
-    const wrapperTexto = document.createElement("div");
-    wrapperTexto.style.marginBottom = "10px";
-    const labelTexto = document.createElement("label");
-    labelTexto.textContent = "Conteúdo do Texto";
-    labelTexto.style.display = "block";
-    labelTexto.style.marginBottom = "4px";
-    wrapperTexto.appendChild(labelTexto);
-    wrapperTexto.appendChild(inputTexto);
-    conteudo.appendChild(wrapperTexto);
-  }
-
-  // Lista de propriedades personalizáveis
-  const propriedades = [
+  const propriedadesComuns = [
+    { key: "width", label: "Largura", type: "range", min: 50, max: 1000 },
+    { key: "height", label: "Altura", type: "range", min: 20, max: 500 },
+    { key: "margin", label: "Margem", type: "text" },
+    { key: "padding", label: "Padding", type: "text" },
+    { key: "border", label: "Borda", type: "text" },
+    {
+      key: "borderRadius",
+      label: "Arredondamento",
+      type: "range",
+      min: 0,
+      max: 100,
+    },
     { key: "backgroundColor", label: "Cor de Fundo", type: "color" },
     { key: "color", label: "Cor do Texto", type: "color" },
-    { key: "borderRadius", label: "Borda Arredondada", type: "range", min: 0, max: 50 },
-    { key: "fontSize", label: "Tamanho da Fonte", type: "range", min: 10, max: 48 },
-    { key: "padding", label: "Padding", type: "range", min: 0, max: 50 },
+    { key: "fontSize", label: "Tamanho da Fonte", type: "text" },
     {
       key: "fontWeight",
       label: "Peso da Fonte",
@@ -43,12 +49,12 @@ export function abrirPainelPropriedades(elemento: any) {
       options: [
         { label: "Normal", value: "normal" },
         { label: "Negrito", value: "bold" },
-        { label: "Mais Negrito", value: "900" },
+        { label: "Muito Negrito", value: "900" },
       ],
     },
     {
       key: "textAlign",
-      label: "Alinhamento do Texto",
+      label: "Alinhamento",
       type: "select",
       options: [
         { label: "Esquerda", value: "left" },
@@ -56,46 +62,92 @@ export function abrirPainelPropriedades(elemento: any) {
         { label: "Direita", value: "right" },
       ],
     },
-    {
-      key: "boxShadow",
-      label: "Sombra",
-      type: "checkbox",
-      getValue: () => elemento.boxShadow === "0px 0px 10px rgba(0,0,0,0.3)",
-      setValue: (checked: boolean) => {
-        elemento.boxShadow = checked ? "0px 0px 10px rgba(0,0,0,0.3)" : "none";
-      },
-    },
   ];
 
-  propriedades.forEach((prop) => {
+  const propriedadesEspecificas: Record<string, any[]> = {
+    text: [{ key: "content", label: "Conteúdo", type: "textarea" }],
+    button: [{ key: "label", label: "Texto do Botão", type: "text" }],
+    image: [
+      {
+        key: "objectFit",
+        label: "Ajuste da Imagem",
+        type: "select",
+        options: [
+          { label: "Preencher", value: "fill" },
+          { label: "Conter", value: "contain" },
+          { label: "Cobrir", value: "cover" },
+        ],
+      },
+    ],
+  };
+
+  const todasProps = [
+    ...propriedadesComuns,
+    ...(propriedadesEspecificas[elemento.type] || []),
+  ];
+
+  if (elemento.placeholder !== undefined) {
+    const presetWrapper = document.createElement("div");
+    presetWrapper.style.marginBottom = "12px";
+
+    const label = document.createElement("label");
+    label.textContent = "Preset de Estilo";
+    label.style.display = "block";
+    presetWrapper.appendChild(label);
+
+    const select = document.createElement("select");
+    Object.keys(inputPresets).forEach((presetName) => {
+      const option = document.createElement("option");
+      option.value = presetName;
+      option.textContent = presetName;
+      select.appendChild(option);
+    });
+
+    select.addEventListener("change", () => {
+      const selected = inputPresets[select.value];
+      Object.entries(selected).forEach(([key, val]) => {
+        elemento[key] = val;
+      });
+      atualizarPreview();
+    });
+
+    presetWrapper.appendChild(select);
+    conteudo.appendChild(presetWrapper);
+  }
+
+  todasProps.forEach((prop) => {
     const wrapper = document.createElement("div");
     wrapper.style.marginBottom = "10px";
 
     const label = document.createElement("label");
     label.textContent = prop.label;
     label.style.display = "block";
-    label.style.marginBottom = "4px";
     wrapper.appendChild(label);
 
-    let input: HTMLElement;
+    const valorAtual = elemento[prop.key] || "";
 
     if (prop.type === "color") {
-      const colorInput = document.createElement("input");
-      colorInput.type = "color";
-      colorInput.value = elemento[prop.key] || "#ffffff";
-      colorInput.addEventListener("input", () => {
-        elemento[prop.key] = colorInput.value;
+      const input = document.createElement("input");
+      input.type = "color";
+
+      try {
+        input.value = valorAtual.startsWith("#") ? valorAtual : "#000000";
+      } catch {
+        input.value = "#000000";
+      }
+
+      input.addEventListener("input", () => {
+        elemento[prop.key] = input.value;
         atualizarPreview();
       });
-      input = colorInput;
-    }
 
-    else if (prop.type === "range") {
+      wrapper.appendChild(input);
+    } else if (prop.type === "range") {
       const range = document.createElement("input");
       range.type = "range";
       range.min = String(prop.min ?? 0);
-      range.max = String(prop.max ?? 100);
-      range.value = parseInt(elemento[prop.key] || 0).toString();
+      range.max = String(prop.max ?? 500);
+      range.value = parseInt(valorAtual.toString()) || 0;
 
       const output = document.createElement("span");
       output.textContent = range.value + "px";
@@ -108,16 +160,37 @@ export function abrirPainelPropriedades(elemento: any) {
 
       wrapper.appendChild(range);
       wrapper.appendChild(output);
-      input = document.createElement("div"); // placeholder, já adicionado
-    }
+    } else if (prop.type === "text") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = valorAtual;
+      input.style.width = "100%";
 
-    else if (prop.type === "select") {
+      input.addEventListener("input", () => {
+        elemento[prop.key] = input.value;
+        atualizarPreview();
+      });
+
+      wrapper.appendChild(input);
+    } else if (prop.type === "textarea") {
+      const textarea = document.createElement("textarea");
+      textarea.value = valorAtual;
+      textarea.rows = 3;
+      textarea.style.width = "100%";
+
+      textarea.addEventListener("input", () => {
+        elemento[prop.key] = textarea.value;
+        atualizarPreview();
+      });
+
+      wrapper.appendChild(textarea);
+    } else if (prop.type === "select") {
       const select = document.createElement("select");
-      prop.options?.forEach((opt) => {
+      prop.options.forEach((opt: any) => {
         const option = document.createElement("option");
         option.value = opt.value;
         option.textContent = opt.label;
-        if (elemento[prop.key] === opt.value) option.selected = true;
+        if (valorAtual === opt.value) option.selected = true;
         select.appendChild(option);
       });
 
@@ -126,24 +199,7 @@ export function abrirPainelPropriedades(elemento: any) {
         atualizarPreview();
       });
 
-      input = select;
-    }
-
-    else if (prop.type === "checkbox") {
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = prop.getValue?.() ?? false;
-
-      checkbox.addEventListener("change", () => {
-        prop.setValue?.(checkbox.checked);
-        atualizarPreview();
-      });
-
-      input = checkbox;
-    }
-
-    if (input.tagName !== "DIV") {
-      wrapper.appendChild(input);
+      wrapper.appendChild(select);
     }
 
     conteudo.appendChild(wrapper);

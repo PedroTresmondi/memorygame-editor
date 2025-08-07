@@ -1,35 +1,30 @@
-import { state, debugMode } from "./state";
+import { state, debugMode, estadoModificado } from "./state";
 import { atualizarPreview } from "./previewRenderer";
 import { adicionarContainer } from "./containerManager";
 import { adicionarCampo } from "./fieldManager";
 import { adicionarTexto } from "./textManager.ts";
-
 import { exibirMensagem } from "./utils.ts";
-import { estadoModificado } from "./state";
-
 import { adicionarBotao, adicionarImagem } from "./elementManager";
 import { salvarEstado, desfazer, refazer } from "./historyManager";
-
-document
-  .getElementById("btnAddBotao")
-  ?.addEventListener("click", adicionarBotao);
-document
-  .getElementById("btnAddImagem")
-  ?.addEventListener("click", adicionarImagem);
-
 import {
   salvarLocal,
   carregarLocal,
   exportarJSON,
   salvarConfiguracao,
 } from "./storage";
-import { alternarPreviewFinal } from "./previewMode";
-
 import { salvarConfiguracaoCadastro } from "./exportador";
-(window as any).salvarConfiguracaoCadastro = salvarConfiguracaoCadastro;
-
+import { alternarPreviewFinal } from "./previewMode";
 import { adicionarGuiasFixas } from "./guiasFixas";
 
+// Expor funções globais que ainda dependem do HTML direto
+(window as any).salvarConfiguracaoCadastro = salvarConfiguracaoCadastro;
+(window as any).desfazer = desfazer;
+(window as any).refazer = refazer;
+(window as any).salvarLocal = salvarLocal;
+(window as any).exportarJSON = exportarJSON;
+(window as any).alternarPreviewFinal = alternarPreviewFinal;
+
+// Carregamento inicial
 window.addEventListener("DOMContentLoaded", async () => {
   try {
     const res = await fetch("http://localhost:5500/data/configCadastro.json");
@@ -50,6 +45,18 @@ window.addEventListener("DOMContentLoaded", async () => {
   adicionarGuiasFixas();
 });
 
+document
+  .getElementById("btnAlternarPreview")
+  ?.addEventListener("click", alternarPreviewFinal);
+
+document
+  .getElementById("btnAddTexto")
+  ?.addEventListener("click", adicionarTexto);
+document
+  .getElementById("btnAddBotao")
+  ?.addEventListener("click", adicionarBotao);
+
+// Seletores de elementos
 const btnAddContainer = document.getElementById("btnAddContainer")!;
 const btnAdicionar = document.getElementById("btnAdicionar")!;
 const btnSalvar = document.getElementById("btnSalvar")!;
@@ -59,9 +66,11 @@ const bgColorPicker = document.getElementById(
 const bgImageUploader = document.getElementById(
   "bgImageUploader"
 ) as HTMLInputElement;
-
-// Overlay de grade (grid)
+const zoomSlider = document.getElementById("zoomSlider") as HTMLInputElement;
+const zoomLabel = document.getElementById("zoomLabel")!;
 const previewWrapper = document.getElementById("previewWrapper")!;
+
+// Grade de fundo
 const gridOverlay = document.createElement("div");
 gridOverlay.id = "gridOverlay";
 gridOverlay.style.position = "absolute";
@@ -83,16 +92,14 @@ function toggleGrid() {
   gridOverlay.style.display = gridAtiva ? "block" : "none";
 }
 
-const zoomSlider = document.getElementById("zoomSlider") as HTMLInputElement;
-const zoomLabel = document.getElementById("zoomLabel")!;
-
+// Zoom
 zoomSlider.addEventListener("input", () => {
   const scale = parseFloat(zoomSlider.value);
   previewWrapper.style.transform = `scale(${scale})`;
   zoomLabel.textContent = `${Math.round(scale * 100)}%`;
 });
 
-// Bind botões principais
+// Botões principais
 btnAddContainer.addEventListener("click", adicionarContainer);
 btnAdicionar.addEventListener("click", () => {
   const containerId = state.containerSelecionado;
@@ -100,6 +107,7 @@ btnAdicionar.addEventListener("click", () => {
     alert("Selecione um container antes de adicionar um campo.");
     return;
   }
+
   const label = prompt("Label do campo:") || "Campo";
   const type = prompt("Tipo (text, email, tel, checkbox, number):") || "text";
   const placeholder = prompt("Placeholder (opcional):") || label;
@@ -116,12 +124,23 @@ btnAdicionar.addEventListener("click", () => {
     placeholder,
   });
 });
+
 btnSalvar.addEventListener("click", salvarConfiguracao);
+
+document
+  .getElementById("btnAddBotao")
+  ?.addEventListener("click", adicionarBotao);
+document
+  .getElementById("btnAddImagem")
+  ?.addEventListener("click", adicionarImagem);
 document
   .getElementById("btnAddTexto")
   ?.addEventListener("click", adicionarTexto);
+document
+  .getElementById("btnAlternarPreview")
+  ?.addEventListener("click", alternarPreviewFinal);
 
-// Configuração de fundo
+// Cor de fundo
 bgColorPicker.addEventListener("input", (e) => {
   state.background = {
     type: "color",
@@ -130,11 +149,11 @@ bgColorPicker.addEventListener("input", (e) => {
   atualizarPreview();
 });
 
+// Imagem de fundo
 bgImageUploader.addEventListener("change", (e) => {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
-  // Aqui assumimos que a imagem já foi manualmente movida para /assets/background
   const fileName = file.name;
   const caminhoRelativo = `/assets/background/${fileName}`;
 
@@ -173,14 +192,7 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-// Expor funções globais ao HTML inline (botões do preview)
-(window as any).desfazer = desfazer;
-(window as any).refazer = refazer;
-(window as any).salvarLocal = salvarLocal;
-(window as any).exportarJSON = exportarJSON;
-(window as any).alternarPreviewFinal = alternarPreviewFinal;
-
-// Inicialização
+// Salvar/Carregar inicial
 carregarLocal();
 atualizarPreview();
 

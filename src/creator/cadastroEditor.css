@@ -226,3 +226,9 @@ button:active {
     transform: translateY(0);
   }
 }
+body.modo-preview .toolbar,
+body.modo-preview #painelCampo,
+body.modo-preview #painelElemento,
+body.modo-preview #painelPropriedades {
+  display: none !important;
+}

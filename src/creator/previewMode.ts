@@ -1,3 +1,5 @@
+import { atualizarPreview } from "./previewRenderer";
+
 export function isPreviewMode(): boolean {
   return document.body.classList.contains("modo-preview");
 }
@@ -28,10 +30,12 @@ export function alternarPreviewFinal(): void {
     btn.addEventListener("click", () => {
       document.body.classList.remove("modo-preview");
       btn.style.display = "none";
+      atualizarPreview(); // ✅ ESSENCIAL para restaurar interface
     });
 
     document.body.appendChild(btn);
   }
 
   btn.style.display = ativado ? "block" : "none";
+  atualizarPreview(); // ✅ Também atualiza ao entrar no preview
 }

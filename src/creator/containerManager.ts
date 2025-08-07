@@ -30,62 +30,48 @@ export function enableContainerDragAndResize(
   container: (typeof state.containers)[number]
 ) {
   let isDragging = false;
+  let isResizing = false;
   let offsetX = 0;
   let offsetY = 0;
 
   containerDiv.addEventListener("mousedown", (e) => {
     if (isPreviewMode()) return;
     if ((e.target as HTMLElement).classList.contains("resize-handle")) return;
+
     isDragging = true;
     offsetX = e.offsetX;
     offsetY = e.offsetY;
     state.containerSelecionado = container.id;
 
-    const moveContainer = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const previewForm = document.getElementById("previewForm");
-      if (!previewForm) return;
-
-      const parentRect = previewForm.getBoundingClientRect();
-      const newLeft = snapToGrid(e.clientX - parentRect.left - offsetX);
-      const newTop = snapToGrid(e.clientY - parentRect.top - offsetY);
-
-      container.left = newLeft;
-      container.top = newTop;
-
-      // 🔵 Snap assist com guias visuais
-      const wrapper = document.getElementById("previewWrapper")!;
-      const wrapperWidth = wrapper.clientWidth;
-      const wrapperHeight = wrapper.clientHeight;
-
-      const centerPreviewX = wrapperWidth / 2;
-      const centerPreviewY = wrapperHeight / 2;
-      const centerContainerX = container.left + container.width / 2;
-      const centerContainerY = container.top + container.height / 2;
-      const threshold = 15;
-
-      if (Math.abs(centerContainerX - centerPreviewX) < threshold) {
-        container.left = snapToGrid(centerPreviewX - container.width / 2);
-        mostrarGuiaDinamica("x");
-      }
-
-      if (Math.abs(centerContainerY - centerPreviewY) < threshold) {
-        container.top = snapToGrid(centerPreviewY - container.height / 2);
-        mostrarGuiaDinamica("y");
-      }
-
-      atualizarPreview();
-    };
-
-    const stopContainer = () => {
-      isDragging = false;
-      document.removeEventListener("mousemove", moveContainer);
-      document.removeEventListener("mouseup", stopContainer);
-    };
-
     document.addEventListener("mousemove", moveContainer);
     document.addEventListener("mouseup", stopContainer);
   });
+
+  function moveContainer(e: MouseEvent) {
+    if (!isDragging || isResizing) return;
+
+    const previewForm = document.getElementById("previewForm");
+    if (!previewForm) return;
+
+    const parentRect = previewForm.getBoundingClientRect();
+    const newLeft = snapToGrid(e.clientX - parentRect.left - offsetX);
+    const newTop = snapToGrid(e.clientY - parentRect.top - offsetY);
+
+    container.left = newLeft;
+    container.top = newTop;
+
+    exibirPosicao(newLeft, newTop);
+    aplicarSnapCentral(container);
+
+    atualizarPreview();
+  }
+
+  function stopContainer() {
+    isDragging = false;
+    esconderPosicao();
+    document.removeEventListener("mousemove", moveContainer);
+    document.removeEventListener("mouseup", stopContainer);
+  }
 
   const resizeHandle = containerDiv.querySelector(
     ".resize-handle"
@@ -94,7 +80,8 @@ export function enableContainerDragAndResize(
     resizeHandle.addEventListener("mousedown", (e) => {
       if (isPreviewMode()) return;
       e.stopPropagation();
-      let isResizing = true;
+
+      isResizing = true;
       let startX = e.clientX;
       let startY = e.clientY;
 
@@ -119,4 +106,57 @@ export function enableContainerDragAndResize(
       document.addEventListener("mouseup", stopResize);
     });
   }
+}
+
+function aplicarSnapCentral(container: {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}) {
+  const wrapper = document.getElementById("previewWrapper");
+  if (!wrapper) return;
+
+  const wrapperWidth = wrapper.clientWidth;
+  const wrapperHeight = wrapper.clientHeight;
+
+  const centerPreviewX = wrapperWidth / 2;
+  const centerPreviewY = wrapperHeight / 2;
+  const centerContainerX = container.left + container.width / 2;
+  const centerContainerY = container.top + container.height / 2;
+  const threshold = 15;
+
+  if (Math.abs(centerContainerX - centerPreviewX) < threshold) {
+    container.left = snapToGrid(centerPreviewX - container.width / 2);
+    mostrarGuiaDinamica("x");
+  }
+
+  if (Math.abs(centerContainerY - centerPreviewY) < threshold) {
+    container.top = snapToGrid(centerPreviewY - container.height / 2);
+    mostrarGuiaDinamica("y");
+  }
+}
+
+function exibirPosicao(x: number, y: number) {
+  let indicador = document.getElementById("indicador-pos");
+  if (!indicador) {
+    indicador = document.createElement("div");
+    indicador.id = "indicador-pos";
+    indicador.style.position = "fixed";
+    indicador.style.top = "10px";
+    indicador.style.right = "10px";
+    indicador.style.background = "black";
+    indicador.style.color = "white";
+    indicador.style.padding = "4px 8px";
+    indicador.style.fontSize = "12px";
+    indicador.style.borderRadius = "4px";
+    indicador.style.zIndex = "9999";
+    document.body.appendChild(indicador);
+  }
+  indicador.textContent = `x: ${x}px, y: ${y}px`;
+}
+
+function esconderPosicao() {
+  const indicador = document.getElementById("indicador-pos");
+  if (indicador) indicador.remove();
 }

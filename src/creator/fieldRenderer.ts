@@ -19,14 +19,24 @@ export function renderCampos(
     wrapper.style.height = "auto";
     wrapper.style.cursor = isPreviewMode() ? "default" : "move";
     wrapper.style.zIndex = "5";
+    wrapper.style.boxSizing = "border-box";
+
     wrapper.style.border = isPreviewMode()
       ? "none"
       : campo.id === state.campoSelecionado
       ? "2px solid #007bff"
       : "1px dashed #ccc";
-    wrapper.style.background = "#fff";
-    wrapper.style.padding = "4px";
-    wrapper.style.boxSizing = "border-box";
+
+    wrapper.style.background =
+      campo.background === false
+        ? "transparent"
+        : campo.backgroundColor || "#fff";
+
+    if (campo.padding) wrapper.style.padding = campo.padding;
+    if (campo.margin) wrapper.style.margin = campo.margin;
+    if (campo.border) wrapper.style.border = campo.border;
+    if (campo.borderRadius) wrapper.style.borderRadius = campo.borderRadius;
+    if (campo.boxShadow) wrapper.style.boxShadow = campo.boxShadow;
 
     const btnRemoveCampo = document.createElement("button");
     btnRemoveCampo.textContent = "❌";
@@ -68,6 +78,19 @@ export function renderCampos(
     input.maxLength = campo.maxLength || 255;
     input.style.height = "40px";
     input.style.boxSizing = "border-box";
+    input.style.width = "100%";
+
+    // Estilos personalizados no input
+    if (campo.color) input.style.color = campo.color;
+    if (campo.backgroundColor)
+      input.style.backgroundColor = campo.backgroundColor;
+    if (campo.border) input.style.border = campo.border;
+    if (campo.fontSize) input.style.fontSize = campo.fontSize;
+    if (campo.fontWeight) input.style.fontWeight = campo.fontWeight;
+    if (campo.padding) input.style.padding = campo.padding;
+    if (campo.textAlign) input.style.textAlign = campo.textAlign;
+    if (campo.borderRadius) input.style.borderRadius = campo.borderRadius;
+    if (campo.boxShadow) input.style.boxShadow = campo.boxShadow;
 
     // Posicionamento da label
     if (campo.labelPosition === "left") {
@@ -89,7 +112,6 @@ export function renderCampos(
       label.style.display = "block";
       label.style.marginBottom = "4px";
       label.style.flexShrink = "0";
-      input.style.width = "100%";
     }
 
     wrapper.appendChild(label);
@@ -106,6 +128,7 @@ export function renderCampos(
     resizeHandleInput.style.cursor = "ew-resize";
     if (!isPreviewMode()) wrapper.appendChild(resizeHandleInput);
 
+    // Drag + Resize
     if (!isPreviewMode()) {
       let isDraggingField = false;
       let offsetX = 0;
