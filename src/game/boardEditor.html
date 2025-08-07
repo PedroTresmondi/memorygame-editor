@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Editor de Tabuleiro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    form { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 1rem; }
+    label { display: flex; flex-direction: column; font-size: 0.9rem; }
+    #preview { margin-top: 1.5rem; border: 1px solid #ccc; padding: 1rem; background: #f9f9f9; }
+    #preview .card { cursor: pointer; }
+    button, select, input { font-size: 0.9rem; padding: 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Editor de Tabuleiro</h1>
+
+  <form id="controls">
+    <label>
+      Colunas
+      <input id="cols" type="number" min="1" value="4" />
+    </label>
+    <label>
+      Linhas
+      <input id="rows" type="number" min="1" value="3" />
+    </label>
+    <label>
+      Pares
+      <input id="numPares" type="number" min="1" value="6" />
+    </label>
+    <label>
+      Espaçamento (px)
+      <input id="gap" type="number" min="0" value="8" />
+    </label>
+    <label>
+      Largura da Carta (px)
+      <input id="cardWidth" type="number" min="20" value="80" />
+    </label>
+    <label>
+      Altura da Carta (px)
+      <input id="cardHeight" type="number" min="20" value="80" />
+    </label>
+    <label>
+      Borda Radius (px)
+      <input id="borderRadius" type="number" min="0" value="8" />
+    </label>
+    <label>
+      Tipo de Animação
+      <select id="animationType">
+        <option value="ease">ease</option>
+        <option value="linear">linear</option>
+        <option value="ease-in">ease-in</option>
+        <option value="ease-out">ease-out</option>
+      </select>
+    </label>
+    <label>
+      Duração (ms)
+      <input id="animationDuration" type="number" min="0" value="300" />
+    </label>
+    <label>
+      Cor de Fundo
+      <input id="bgColor" type="color" value="#ffffff" />
+    </label>
+    <label>
+      Imagem de Fundo
+      <input id="bgUpload" type="file" accept="image/*" />
+    </label>
+    <label>
+      Fonte
+      <select id="fontSelect">
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+        <option value="Georgia, serif">Georgia</option>
+      </select>
+    </label>
+    <label>
+      Box-Shadow
+      <input id="boxShadow" type="text" value="2px 2px 6px rgba(0,0,0,0.2)" />
+    </label>
+    <label>
+      Modo Tela
+      <select id="modoTela">
+        <option value="full">Tela Cheia</option>
+        <option value="windowed">Janela</option>
+      </select>
+    </label>
+    <label>
+      Width do Container (px)
+      <input id="telaWidth" type="number" min="100" value="600" />
+    </label>
+    <label>
+      Height do Container (px)
+      <input id="telaHeight" type="number" min="100" value="400" />
+    </label>
+    <label>
+      Dark Mode
+      <button type="button" id="toggleDark" data-active="false">Ativar Modo Dark</button>
+    </label>
+    <label>
+      Mostrar Faces
+      <button type="button" id="toggleFaces" data-active="true">Revelar Faces</button>
+    </label>
+  </form>
+
+  <button id="btnSalvar" onclick="salvarConfig()">💾 Salvar Configuração</button>
+
+  <div id="preview"></div>
+
+  <script type="module" src="/src/game/boardEditor.ts"></script>
+</body>
+</html>
